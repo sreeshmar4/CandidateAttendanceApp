@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "SMEC Tracker")</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <div class="bg-orb bg-orb-left"></div>
+    <div class="bg-orb bg-orb-right"></div>
+
+    <header class="app-header">
+        <nav class="navbar navbar-expand-lg nav-shell">
+            <div class="app-container">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                        <img src="~/images/IMG-20260421-WA0031.jpg" alt="SMEC Tracker" style="height:48px;width:auto;border-radius:4px;" />
+                        <span>SMEC Tracker</span>
+                    </a>
+
+                    @if (ViewData["HideNav"] == null)
+                    {
+                        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                                aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                    }
+                </div>
+
+                <div class="collapse navbar-collapse mt-3 mt-lg-0" id="mainNav">
+                  @if (ViewData["HideNav"] == null)
+                  {
+                    <ul class="navbar-nav app-nav-links me-auto mb-2 mb-lg-0 gap-lg-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            if (User.IsInRole("User"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Attendance" asp-action="Dashboard">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Attendance" asp-action="Monthly">Monthly Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Attendance" asp-action="Fees">Payments</a>
+                                </li>
+                            }
+
+                            if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="UserSummary">User Summary</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="NewRegistration">New Registration</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="NewAdmission">New Admission</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Fees">Manage Payments</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Settings" asp-action="Sections">Settings</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                  }
+
+                  @if (ViewData["HideNav"] == null)
+                  {
+                    <ul class="navbar-nav align-items-lg-center gap-2 ms-lg-auto">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <span class="navbar-text user-chip">
+                                    <i class="bi bi-person-circle"></i>
+                                    @User.Identity.Name
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    <button class="btn btn-sm btn-danger px-3">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-sm btn-success px-3" href="/Account/Login">Login</a>
+                            </li>
+                        }
+                    </ul>
+                  }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pb-5">
+        <div class="app-container py-4 py-md-5">
+            @RenderBody()
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

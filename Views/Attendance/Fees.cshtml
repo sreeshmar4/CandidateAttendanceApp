@@ -1,0 +1,209 @@
+@using CandidateAttendanceApp.Helpers
+@model CandidateAttendanceApp.ViewModels.CandidateFeesViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "My Fees";
+    var courseName = Model.Profile?.Section?.Name;
+}
+
+<section class="page-title-row reveal">
+    <h2 class="mb-2">My Fees</h2>
+    <p class="text-muted mb-0">Review fee records for your account only.</p>
+</section>
+
+<div class="row g-4 mt-1">
+    <div class="col-12 col-xl-4">
+        <section class="panel-card h-100 reveal">
+            <h5 class="mb-3">Candidate Details</h5>
+
+            <div class="d-grid gap-2">
+                <div>
+                    <div class="text-muted small">Candidate Name</div>
+                    <div class="fw-semibold">@(Model.Profile?.Name ?? User.Identity?.Name ?? "Candidate")</div>
+                </div>
+
+                <div>
+                    <div class="text-muted small">Admission No</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Profile?.AdmissionNumber) ? "-" : Model.Profile!.AdmissionNumber)</div>
+                </div>
+
+                <div>
+                    <div class="text-muted small">Course Name</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(courseName) ? "-" : courseName)</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-12 col-xl-8">
+        <section class="panel-card h-100 reveal">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="stat-card stat-card-surface h-100">
+                        <div class="stat-label">Total Records</div>
+                        <div class="stat-value">@Model.TotalRecords</div>
+                        <div class="stat-meta">All fee entries for your account</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="stat-card stat-card-success h-100">
+                        <div class="stat-label">Paid Amount</div>
+                        <div class="stat-value">Rs. @Model.TotalPaidAmount.ToString("N2")</div>
+                        <div class="stat-meta">@Model.PaidCount paid record(s)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<section class="panel-card reveal mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="mb-0">Fee Records</h5>
+    </div>
+
+    <form asp-action="Fees" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="paymentStatus" class="form-label">Payment Status</label>
+            <select class="form-select" id="paymentStatus" name="paymentStatus">
+                <option value="">All Statuses</option>
+                <option value="paid" selected="@(ViewBag.PaymentStatus == "paid" ? "selected" : null)">Paid</option>
+                <option value="pending" selected="@(ViewBag.PaymentStatus == "pending" ? "selected" : null)">Pending</option>
+                <option value="overdue" selected="@(ViewBag.PaymentStatus == "overdue" ? "selected" : null)">Overdue</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="courseId" class="form-label">Course</label>
+            <select class="form-select" id="courseId" name="courseId">
+                <option value="">All Courses</option>
+                @foreach (var course in Model.Courses)
+                {
+                    <option value="@course.Id" selected="@(ViewBag.SelectedCourseId == course.Id ? "selected" : null)">@course.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-auto">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+        </div>
+        <div class="col-12 col-md-auto">
+            <a asp-action="Fees" class="btn btn-outline-secondary w-100">
+                Clear
+            </a>
+        </div>
+    </form>
+
+    @if (Model.TotalRecords > 0)
+    {
+        <p class="text-muted small mb-3">
+            Showing page @Model.CurrentPage of @Model.TotalPages with @Model.TotalRecords total record(s).
+        </p>
+    }
+
+    @if (Model.Fees.Any())
+    {
+        <div class="table-shell">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Due Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fee in Model.Fees)
+                    {
+                        var courseLabel = fee.Course?.Name ?? Model.Profile?.Section?.Name ?? "-";
+                        var isOverdue = !fee.IsPaid && fee.DueDate.Date < TimeHelper.TodayIst;
+
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@courseLabel</div>
+                                @if (!string.IsNullOrWhiteSpace(fee.Notes))
+                                {
+                                    <div class="text-muted small">@fee.Notes</div>
+                                }
+                            </td>
+                            <td>
+                                <div>@fee.DueDate.ToString("dd MMM yyyy")</div>
+                                @if (fee.IsPaid && fee.PaidDate.HasValue)
+                                {
+                                    <div class="text-muted small">Paid on @fee.PaidDate.Value.ToString("dd MMM yyyy")</div>
+                                }
+                                else if (isOverdue)
+                                {
+                                    <div class="text-danger small">Overdue</div>
+                                }
+                            </td>
+                            <td class="fw-semibold">Rs. @fee.Amount.ToString("N2")</td>
+                            <td>
+                                @if (fee.IsPaid)
+                                {
+                                    <span class="badge text-bg-success">Paid</span>
+                                }
+                                else if (isOverdue)
+                                {
+                                    <span class="badge text-bg-danger">Overdue</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-warning">Pending</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-3" aria-label="Candidate fee records pagination">
+                <ul class="pagination mb-0 flex-wrap">
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="Fees"
+                           asp-route-paymentStatus="@ViewBag.PaymentStatus"
+                           asp-route-courseId="@ViewBag.SelectedCourseId"
+                           asp-route-page="@(Model.CurrentPage - 1)">
+                            Previous
+                        </a>
+                    </li>
+
+                    @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : null)">
+                            <a class="page-link"
+                               asp-action="Fees"
+                               asp-route-paymentStatus="@ViewBag.PaymentStatus"
+                               asp-route-courseId="@ViewBag.SelectedCourseId"
+                               asp-route-page="@pageNumber">
+                                @pageNumber
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-action="Fees"
+                           asp-route-paymentStatus="@ViewBag.PaymentStatus"
+                           asp-route-courseId="@ViewBag.SelectedCourseId"
+                           asp-route-page="@(Model.CurrentPage + 1)">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> No fee records found for your account.
+        </div>
+    }
+</section>

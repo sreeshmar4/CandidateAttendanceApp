@@ -1,0 +1,107 @@
+@model CandidateAttendanceApp.ViewModels.AdminDashboardViewModel
+@using System.Text.Json
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="page-title-row reveal d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3">
+    <div>
+        <h2 class="mb-2">Dashboard</h2>
+        <p class="text-muted mb-0">Track attendance for the selected period and review the latest trend.</p>
+    </div>
+
+    <form method="get" class="dashboard-filter-form">
+        <label for="range" class="form-label mb-2">Filter Range</label>
+        <select id="range" name="range" class="form-select" onchange="this.form.submit()">
+            <option value="thisWeek" selected="@(Model.SelectedRange == "thisWeek" ? "selected" : null)">This Week</option>
+            <option value="thisMonth" selected="@(Model.SelectedRange == "thisMonth" ? "selected" : null)">This Month</option>
+            <option value="thisYear" selected="@(Model.SelectedRange == "thisYear" ? "selected" : null)">This Year</option>
+        </select>
+    </form>
+</section>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <section class="stat-card stat-card-primary reveal">
+            <p class="stat-label">Total Users</p>
+            <h3 class="stat-value">@Model.TotalUsers</h3>
+        </section>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <section class="stat-card stat-card-success reveal">
+            <p class="stat-label">Total Registrations</p>
+            <h3 class="stat-value">@Model.TotalRegistrations</h3>
+        </section>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <section class="stat-card stat-card-primary reveal">
+            <p class="stat-label">Total Admissions</p>
+            <h3 class="stat-value">@Model.TotalAdmissions</h3>
+        </section>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <section class="stat-card stat-card-success reveal">
+            <p class="stat-label">@Model.RangeLabel Check-Ins</p>
+            <h3 class="stat-value">@Model.PresentCount</h3>
+        </section>
+    </div>
+</div>
+
+<section class="panel-card reveal">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+        <div>
+            <h5 class="mb-1">@Model.RangeLabel Attendance Graph</h5>
+            <p class="text-muted mb-0">@Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy")</p>
+        </div>
+    </div>
+    <div class="chart-shell">
+        <canvas id="attendanceChart"></canvas>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        var ctx = document.getElementById('attendanceChart');
+        var labels = @Html.Raw(JsonSerializer.Serialize(Model.ChartLabels));
+        var data = @Html.Raw(JsonSerializer.Serialize(Model.ChartValues));
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '@Model.RangeLabel Check-Ins',
+                    data: data,
+                    backgroundColor: 'rgba(14, 165, 233, 0.65)',
+                    borderColor: 'rgba(15, 118, 110, 1)',
+                    borderRadius: 8,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+}

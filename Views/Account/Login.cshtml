@@ -1,0 +1,32 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Login";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+        <section class="panel-card reveal">
+            <h2 class="mb-2">Sign In</h2>
+            <p class="text-muted mb-4">Enter your credentials to access attendance features.</p>
+
+            <form method="post" asp-controller="Account" asp-action="Login" class="d-grid gap-3">
+                <div>
+                    <label class="form-label fw-semibold" for="email">Email</label>
+                    <input id="email" name="email" type="email" class="form-control form-control-lg" placeholder="name@example.com" required />
+                </div>
+
+                <div>
+                    <label class="form-label fw-semibold" for="password">Password</label>
+                    <input id="password" name="password" type="password" class="form-control form-control-lg" placeholder="Enter password" required />
+                </div>
+
+                <button class="btn btn-primary btn-lg">Login</button>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger mb-0">@ViewBag.Error</div>
+                }
+            </form>
+        </section>
+    </div>
+</div>

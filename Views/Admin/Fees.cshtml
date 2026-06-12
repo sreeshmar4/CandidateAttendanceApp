@@ -1,0 +1,124 @@
+@model CandidateAttendanceApp.ViewModels.AdminFeesViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Fees Management";
+}
+
+<section class="page-title-row reveal">
+    <h2 class="mb-2">Fees Management</h2>
+    <p class="text-muted mb-0">Create fee records, track payment status, and manage pending dues for candidates.</p>
+</section>
+
+@if (TempData["Success"] != null || ViewBag.Success != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @(TempData["Success"] ?? ViewBag.Success)
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null || ViewBag.Error != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @(TempData["Error"] ?? ViewBag.Error)
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <section class="stat-card stat-card-primary reveal">
+            <p class="stat-label">Pending Fees</p>
+            <h3 class="stat-value">@Model.PendingCount</h3>
+            <p class="mb-0 text-muted">Rs. @Model.TotalPendingAmount.ToString("N2") outstanding</p>
+        </section>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <section class="stat-card stat-card-success reveal">
+            <p class="stat-label">Paid Fees</p>
+            <h3 class="stat-value">@Model.PaidCount</h3>
+            <p class="mb-0 text-muted">Rs. @Model.TotalPaidAmount.ToString("N2") collected</p>
+        </section>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <section class="stat-card stat-card-surface reveal">
+            <p class="stat-label">Total Records</p>
+            <h3 class="stat-value">@Model.Fees.Count</h3>
+            <p class="mb-0 text-muted">Across all candidate accounts</p>
+        </section>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <section class="panel-card reveal">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Fee Records</h5>
+            </div>
+
+            <form asp-action="FeeRecords" method="get" class="row g-2 align-items-end mb-3">
+                <div class="col-12 col-md-6">
+                    <label for="recordsSearchTerm" class="form-label">Search by Admission No</label>
+                    <input type="text"
+                           class="form-control"
+                           id="recordsSearchTerm"
+                           name="searchTerm"
+                           placeholder="Enter admission number" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Open Fee Records
+                    </button>
+                </div>
+            </form>
+
+            <div class="row mb-3">
+                <div class="col-12 col-md-3">
+                    <a id="collectFeeLink" asp-action="CollectFee" class="btn btn-success w-100">
+                        <i class="bi bi-cash-coin"></i> Collect Fee
+                    </a>
+                </div>
+            </div>
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('recordsSearchTerm');
+        const collectLink = document.getElementById('collectFeeLink');
+        const baseUrl = collectLink.href;
+
+        function updateCollectLink() {
+            const val = searchInput.value.trim();
+            collectLink.href = val ? baseUrl + '?admissionNumber=' + encodeURIComponent(val) : baseUrl;
+        }
+
+        searchInput.addEventListener('input', updateCollectLink);
+        updateCollectLink();
+    </script>
+}
+
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                        <div class="text-muted small mb-1">Current Records</div>
+                        <div class="fs-4 fw-semibold">@Model.Fees.Count</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                        <div class="text-muted small mb-1">Pending</div>
+                        <div class="fs-4 fw-semibold">@Model.PendingCount</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                        <div class="text-muted small mb-1">Paid</div>
+                        <div class="fs-4 fw-semibold">@Model.PaidCount</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

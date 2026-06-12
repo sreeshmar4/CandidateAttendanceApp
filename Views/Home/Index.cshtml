@@ -1,0 +1,65 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home";
+}
+
+<section class="landing-hero reveal">
+    <div class="hero-grid">
+        <div class="hero-content">
+            <span class="hero-kicker">User Attendance Platform</span>
+            <h1 class="hero-title mt-3">Attendance that feels faster, cleaner, and easier to manage.</h1>
+            <p class="hero-text mt-3 mb-4">
+                Track daily check-ins, view monthly reports, and keep teams aligned with a polished dashboard experience.
+            </p>
+
+            <div class="hero-pill-row mb-4">
+                <span class="hero-pill"><i class="bi bi-lightning-charge-fill"></i> Quick Check In/Out</span>
+                <span class="hero-pill"><i class="bi bi-graph-up-arrow"></i> Monthly Insights</span>
+                <span class="hero-pill"><i class="bi bi-file-earmark-excel-fill"></i> Excel Export</span>
+            </div>
+
+            <div class="hero-actions d-flex flex-wrap gap-2">
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    if (User.IsInRole("User"))
+                    {
+                        <a class="btn btn-light btn-lg px-4" href="/Attendance/Dashboard">Open User Dashboard</a>
+                        <a class="btn btn-outline-light btn-lg px-4" href="/Attendance/Monthly">Open Monthly Report</a>
+                    }
+                    else if (User.IsInRole("Admin"))
+                    {
+                        <a class="btn btn-light btn-lg px-4" href="/Admin/Dashboard">Open Dashboard</a>
+                        <a class="btn btn-outline-light btn-lg px-4" href="/Admin/UserSummary">Open User Summary</a>
+                    }
+                }
+                else
+                {
+                    <a class="btn btn-light btn-lg px-4" href="/Account/Login">Login to Continue</a>
+                }
+            </div>
+        </div>
+
+        <div class="hero-banner-wrap">
+            <img class="hero-banner" src="/images/attendance-banner.svg" alt="Attendance analytics dashboard banner" />
+            <div class="hero-banner-badge">
+                <i class="bi bi-shield-check"></i>
+                Built for daily reliability
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="metrics-strip reveal mt-4">
+    <article class="metric-card">
+        <p class="metric-label">Realtime Attendance</p>
+        <h3>Daily Check-In Visibility</h3>
+    </article>
+    <article class="metric-card">
+        <p class="metric-label">User Reports</p>
+        <h3>Monthly Work-Hour Tracking</h3>
+    </article>
+    <article class="metric-card">
+        <p class="metric-label">Admin Controls</p>
+        <h3>Role-Based Dashboard Access</h3>
+    </article>
+</section>

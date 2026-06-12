@@ -1,0 +1,32 @@
+## .NET
+bin/
+obj/
+obj-build-check/
+build-check/
+build-coursefee-check/
+build-admission-registration-check/
+build-check-user-details/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## VS Code
+.vscode/
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## macOS
+.DS_Store
+
+## Rider
+.idea/
+
+## Visual Studio
+.vs/
+*.rsuser

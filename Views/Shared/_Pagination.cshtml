@@ -1,0 +1,60 @@
+@* Pagination partial - pass ViewData["PaginationAction"], ViewData["PaginationController"], and ViewData["PaginationRouteValues"] *@
+@{
+    var currentPage = (int)ViewData["CurrentPage"]!;
+    var totalPages = (int)ViewData["TotalPages"]!;
+    var totalRecords = (int)ViewData["TotalRecords"]!;
+    var action = ViewData["PaginationAction"]?.ToString() ?? "";
+    var controller = ViewData["PaginationController"]?.ToString();
+    var routeValues = ViewData["PaginationRouteValues"] as Dictionary<string, string?>;
+}
+
+@if (totalPages > 1)
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3">
+        <small class="text-muted mb-2">
+            Showing page @currentPage of @totalPages (@totalRecords total records)
+        </small>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0 flex-wrap">
+                <li class="page-item @(currentPage <= 1 ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-action="@action"
+                       asp-controller="@controller"
+                       asp-all-route-data="@(MergePageRoute(routeValues, currentPage - 1))">
+                        Previous
+                    </a>
+                </li>
+
+                @for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == currentPage ? "active" : null)">
+                        <a class="page-link"
+                           asp-action="@action"
+                           asp-controller="@controller"
+                           asp-all-route-data="@(MergePageRoute(routeValues, pageNumber))">
+                            @pageNumber
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-action="@action"
+                       asp-controller="@controller"
+                       asp-all-route-data="@(MergePageRoute(routeValues, currentPage + 1))">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+
+@functions {
+    Dictionary<string, string?> MergePageRoute(Dictionary<string, string?>? existing, int page)
+    {
+        var result = existing != null ? new Dictionary<string, string?>(existing) : new Dictionary<string, string?>();
+        result["page"] = page.ToString();
+        return result;
+    }
+}

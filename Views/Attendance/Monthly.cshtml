@@ -1,0 +1,67 @@
+@model CandidateAttendanceApp.ViewModels.PaginatedList<CandidateAttendanceApp.Models.Attendance>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Monthly Attendance";
+}
+
+<section class="page-title-row reveal">
+    <h2 class="mb-2">Monthly Attendance</h2>
+    <p class="text-muted mb-0">Review your month-wise attendance and total work hours.</p>
+</section>
+
+<section class="panel-card reveal">
+    <div class="table-shell">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Work Hours</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Date.ToShortDateString()</td>
+                            <td>@(item.CheckIn.HasValue ? item.CheckIn.Value.ToString("hh:mm tt") : "-")</td>
+                            <td>@(item.CheckOut.HasValue ? item.CheckOut.Value.ToString("hh:mm tt") : "-")</td>
+                            <td>@(item.WorkHours?.ToString("0.00") ?? "-") hrs</td>
+                            <td>
+                                @if (item.IsLate)
+                                {
+                                    <span class="badge bg-warning text-dark">Late</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">On-Time</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No attendance records found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @{
+        ViewData["CurrentPage"] = Model.CurrentPage;
+        ViewData["TotalPages"] = Model.TotalPages;
+        ViewData["TotalRecords"] = Model.TotalRecords;
+        ViewData["PaginationAction"] = "Monthly";
+        ViewData["PaginationController"] = "Attendance";
+        ViewData["PaginationRouteValues"] = new Dictionary<string, string?>();
+    }
+    <partial name="_Pagination" />
+</section>

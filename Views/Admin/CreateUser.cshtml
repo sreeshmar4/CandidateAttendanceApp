@@ -1,0 +1,500 @@
+@model CandidateAttendanceApp.ViewModels.AdminUserFormViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmissionMode = !Model.IsRegistrationMode;
+    var isAdmissionLookupComplete = isAdmissionMode && !Model.IsEditMode &&
+        (!string.IsNullOrWhiteSpace(Model.UserId) || Model.IsAdmissionLookupComplete);
+    var showDetailFields = Model.IsRegistrationMode || Model.IsEditMode || isAdmissionLookupComplete;
+    var pageTitle = Model.IsEditMode ? "User Details" : (isAdmissionMode ? "New Admission" : "New Registration");
+    var pageSubtitle = Model.IsEditMode
+        ? "Review and update user information."
+        : (isAdmissionMode
+            ? "Load an existing registration by phone number, then update admission details."
+            : "Create a new registration with fee and address details.");
+    var formAction = Model.IsEditMode
+        ? "EditUser"
+        : (Model.IsRegistrationMode ? "NewRegistration" : "NewAdmission");
+    var submitLabel = Model.IsEditMode
+        ? "Save Details"
+        : (isAdmissionMode
+            ? (isAdmissionLookupComplete ? "Final Update" : "Load Details")
+            : "Create Registration");
+    ViewData["Title"] = pageTitle;
+}
+
+<section class="page-title-row reveal">
+    <h2 class="mb-2">@pageTitle</h2>
+    <p class="text-muted mb-0">@pageSubtitle</p>
+</section>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<section class="panel-card reveal">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h5 class="mb-0">User Details</h5>
+        <div class="d-flex gap-2">
+            @if (Model.IsRegistrationMode && !Model.IsEditMode)
+            {
+                <button type="button" class="btn btn-sm btn-outline-info" id="copyRegLinkBtn"
+                        data-reg-url="@Url.Action("Register", "Home", null, Context.Request.Scheme)">
+                    <i class="bi bi-link-45deg"></i> Copy Registration Link
+                </button>
+            }
+            @if (isAdmissionLookupComplete)
+            {
+                <a asp-action="NewAdmission" class="btn btn-sm btn-outline-primary">
+                    Search Another Number
+                </a>
+            }
+            <a asp-action="UserSummary" class="btn btn-sm btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to User List
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="@formAction" method="post" id="registrationForm">
+        <input asp-for="UserId" type="hidden" />
+        <input type="hidden" name="IsRegistrationMode" value="@Model.IsRegistrationMode.ToString().ToLower()" />
+        <input type="hidden" name="IsAdmissionLookupComplete" value="@Model.IsAdmissionLookupComplete.ToString().ToLower()" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        @if (isAdmissionMode && !Model.IsEditMode && !isAdmissionLookupComplete)
+        {
+            <!-- Phone number lookup form -->
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="PhoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" required />
+                        <button type="submit" name="submitAction" value="lookup" class="btn btn-primary px-4">
+                            <i class="bi bi-search"></i> @submitLabel
+                        </button>
+                    </div>
+                    <div class="form-text">Enter the registration phone number to load the existing user details.</div>
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i> Enter a registered user's phone number first. The saved details will be filled in automatically.
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.IsRegistrationMode && !Model.IsEditMode)
+        {
+            <!-- Simple registration form (no tabs) -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="user@example.com" required />
+                    <div class="form-text">This will be used as the username for login.</div>
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter full name" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Address" class="form-label">Address</label>
+                    <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter address"></textarea>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EducationalQualification" class="form-label">Educational Qualification</label>
+                    <input asp-for="EducationalQualification" class="form-control" placeholder="Enter educational qualification" />
+                    <span asp-validation-for="EducationalQualification" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CourseFee" class="form-label">Registration Fee</label>
+                    <input asp-for="CourseFee" class="form-control" min="0" step="0.01" placeholder="Enter registration fee" />
+                    <div class="form-text">Optional: Enter the amount collected during registration.</div>
+                    <span asp-validation-for="CourseFee" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> The user will be created as a registration with a temporary password shown after creation.
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-save"></i> @submitLabel
+                    </button>
+                    <a asp-action="UserSummary" class="btn btn-secondary px-4 ms-2">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-4" id="regTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">
+                        <span class="badge bg-primary rounded-circle me-1">1</span> Personal Information
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button" role="tab">
+                        <span class="badge bg-primary rounded-circle me-1">2</span> Educational Qualification
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3" type="button" role="tab">
+                        <span class="badge bg-primary rounded-circle me-1">3</span> SMEC Relation
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab4-tab" data-bs-toggle="tab" data-bs-target="#tab4" type="button" role="tab">
+                        <span class="badge bg-primary rounded-circle me-1">4</span> Course & Admission
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="regTabsContent">
+
+                <!-- Tab 1: Personal Information -->
+                <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" placeholder="Enter full name" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="user@example.com" required />
+                            <div class="form-text">This will be used as the username for login.</div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="+91" required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ParentName" class="form-label">Parent Name <span class="text-danger">*</span></label>
+                            <input asp-for="ParentName" class="form-control" placeholder="Enter parent name" required />
+                            <span asp-validation-for="ParentName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ParentOccupation" class="form-label">Parent Occupation <span class="text-danger">*</span></label>
+                            <input asp-for="ParentOccupation" class="form-control" placeholder="Enter parent occupation" required />
+                            <span asp-validation-for="ParentOccupation" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ParentNo" class="form-label">Parent / Guardian Mobile Number <span class="text-danger">*</span></label>
+                            <input asp-for="ParentNo" class="form-control" placeholder="+91" required />
+                            <span asp-validation-for="ParentNo" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label">Address</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-primary btn-next" data-next="tab2-tab">
+                                Next <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Educational Qualification -->
+                <div class="tab-pane fade" id="tab2" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="EducationalQualification" class="form-label">Highest Educational Qualification <span class="text-danger">*</span></label>
+                            <select asp-for="EducationalQualification" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="B-Tech/BE">B-Tech/BE</option>
+                                <option value="Diploma">Diploma</option>
+                                <option value="Degree">Degree</option>
+                                <option value="Plus Two">Plus Two</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="EducationalQualification" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CollegeName" class="form-label">College Name <span class="text-danger">*</span></label>
+                            <input asp-for="CollegeName" class="form-control" placeholder="Enter college name" required />
+                            <span asp-validation-for="CollegeName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="YearOfPassout" class="form-label">Year of Passout <span class="text-danger">*</span></label>
+                            <select asp-for="YearOfPassout" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                @for (int year = 2030; year >= 2000; year--)
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            </select>
+                            <span asp-validation-for="YearOfPassout" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Department" class="form-label">Department</label>
+                            <select asp-for="Department" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option value="BA">BCA</option>
+                                <option value="BSC-CS">BSC-CS</option>
+                                <option value="BTECH-CS">BTECH-CS</option>
+                                <option value="BTECH-IT">BTECH-IT</option>
+                                <option value="BVOC">BVOC</option>
+                                <option value="MCA">MCA</option>
+                                <option value="MSC-CS">MSC CS</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
+                            <span asp-validation-for="Department" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary btn-prev" data-prev="tab1-tab">
+                                <i class="bi bi-arrow-left"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary btn-next" data-next="tab3-tab">
+                                Next <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: SMEC Relation -->
+                <div class="tab-pane fade" id="tab3" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="CareerConsultant" class="form-label">Career Consultant in SMEC Technologies <span class="text-danger">*</span></label>
+                            <select asp-for="CareerConsultant" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="Robin Raj">Robin Raj</option>
+                                <option value="Dona George Sunny">Dona George Sunny</option>
+                                <option value="Swetha Elsa Kurian">Swetha Elsa Kurian</option>
+                                <option value="Annashali">Annashali</option>
+                                <option value="Jalva Jahan">Jalva Jahan</option>
+                                <option value="Philomina Hendri">Philomina Hendri</option>
+                                <option value="Sona ES">Sona ES</option>
+                                <option value="Aswathy Kurup N">Aswathy Kurup N</option>
+                                <option value="RVN">RVN</option>
+                                <option value="Sherin Moithu">Sherin Moithu</option>
+                                <option value="Sangeetha US">Sangeetha US</option>
+                                <option value="Elsa John">Elsa John</option>
+                                <option value="Shahanas S">Shahanas S</option>
+                                <option value="Valsa Priya V">Valsa Priya V</option>
+                                <option value="Archa Sathyan">Archa Sathyan</option>
+                                <option value="Reshma Ajith">Reshma Ajith</option>
+                                <option value="Dilna Tressa KJ">Dilna Tressa KJ</option>
+                                <option value="Abhirami Pradeep">Abhirami Pradeep</option>
+                                <option value="Steffi Stephen">Steffi Stephen</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="CareerConsultant" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="HowFoundSmec" class="form-label">How did you find SMEC Technologies? <span class="text-danger">*</span></label>
+                            <select asp-for="HowFoundSmec" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="Direct">Direct</option>
+                                <option value="Google Search">Google Search</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="YouTube">YouTube</option>
+                                <option value="Website">Website</option>
+                                <option value="Friend / Referral">Friend / Referral</option>
+                                <option value="Staff / Faculty">Staff / Faculty</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Advertisement">Advertisement</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="HowFoundSmec" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BranchLocation" class="form-label">Branch Location <span class="text-danger">*</span></label>
+                            <select asp-for="BranchLocation" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="Kochi">Kochi</option>
+                                <option value="Calicut">Calicut</option>
+                                <option value="Trivandrum">Trivandrum</option>
+                                <option value="Online">Online</option>
+                            </select>
+                            <span asp-validation-for="BranchLocation" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary btn-prev" data-prev="tab2-tab">
+                                <i class="bi bi-arrow-left"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary btn-next" data-next="tab4-tab">
+                                Next <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Course & Admission Details -->
+                <div class="tab-pane fade" id="tab4" role="tabpanel">
+                    <div class="row g-3">
+                        @if (isAdmissionMode || Model.IsEditMode)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="AdmissionNumber" class="form-label">Admission Number <span class="text-danger">*</span></label>
+                                <input asp-for="AdmissionNumber" class="form-control" placeholder="Enter admission number" required />
+                                <div class="form-text">Use the unique admission number assigned to this user.</div>
+                                <span asp-validation-for="AdmissionNumber" class="text-danger"></span>
+                            </div>
+                        }
+                        <div class="col-md-6">
+                            <label asp-for="SkillSector" class="form-label">Skill Sector <span class="text-danger">*</span></label>
+                            <select asp-for="SkillSector" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="Software Development">Software Development</option>
+                                <option value="Software Testing">Software Testing</option>
+                                <option value="Data Science">Data Science</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="SkillSector" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ApplicationFeeStatus" class="form-label">Application Fee Details</label>
+                            <select asp-for="ApplicationFeeStatus" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option value="Pay Now">Pay Now</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                            <span asp-validation-for="ApplicationFeeStatus" class="text-danger"></span>
+                        </div>
+                        @if (isAdmissionMode || Model.IsEditMode)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="SectionId" class="form-label">Course Name</label>
+                                <select asp-for="SectionId" class="form-select">
+                                    <option value="">-- Select Course --</option>
+                                    @foreach (var course in Model.Sections)
+                                    {
+                                        var courseFee = course.Fee?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                                        <option value="@course.Id" data-course-fee="@courseFee">@course.Name</option>
+                                    }
+                                </select>
+                                <div class="form-text">Optional: Assign the user to a course.</div>
+                                <span asp-validation-for="SectionId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AdmissionFee" class="form-label">Course Fee</label>
+                                <input asp-for="AdmissionFee" class="form-control" readonly placeholder="Select a course to auto-fill" />
+                                <div class="form-text">This is automatically fetched from the selected course.</div>
+                                <span asp-validation-for="AdmissionFee" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="StartDate" class="form-label">Start Date</label>
+                                <input asp-for="StartDate" type="date" class="form-control" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                        }
+                            <div class="col-md-6">
+                                <label asp-for="CourseFee" class="form-label">Registration Fee</label>
+                                <input asp-for="CourseFee" class="form-control" min="0" step="0.01" placeholder="Enter registration fee" />
+                                <div class="form-text">Optional: Enter the amount collected during registration.</div>
+                                <span asp-validation-for="CourseFee" class="text-danger"></span>
+                            </div>
+                        <div class="col-md-6">
+                            <label asp-for="TentativeStartMonth" class="form-label">Tentative Starting Month</label>
+                            <input asp-for="TentativeStartMonth" class="form-control" type="month" />
+                            <span asp-validation-for="TentativeStartMonth" class="text-danger"></span>
+                        </div>
+                        @if (Model.IsEditMode)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="Password" class="form-label">New Password</label>
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Leave blank to keep current password" />
+                                <div class="form-text">Optional: enter a new password only if it needs to be changed.</div>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ConfirmPassword" class="form-label">Confirm New Password</label>
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Re-enter the new password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            </div>
+                        }
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Note:</strong>
+                                @(Model.IsEditMode
+                                    ? "You can update the user profile here and save the changes directly."
+                                    : (Model.IsRegistrationMode
+                                        ? "The user will be created as a registration with a temporary password shown after creation."
+                                        : "Review the loaded registration details, enter admission number, and click Final Update to save."))
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary btn-prev" data-prev="tab3-tab">
+                                <i class="bi bi-arrow-left"></i> Previous
+                            </button>
+                            @if (isAdmissionMode && !Model.IsEditMode)
+                            {
+                                <button type="submit" name="submitAction" value="update" class="btn btn-success px-4">
+                                    <i class="bi bi-save"></i> @submitLabel
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-success px-4">
+                                    <i class="bi bi-save"></i> @submitLabel
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+    </form>
+</section>
+
+@section Scripts {
+    <script src="~/js/register-validation.js"></script>
+    <script>
+        const courseSelect = document.getElementById('SectionId');
+        const courseFeeInput = document.getElementById('AdmissionFee');
+
+        if (courseSelect && courseFeeInput) {
+            const syncCourseFee = function () {
+                const selectedCourse = courseSelect.options[courseSelect.selectedIndex];
+                const fee = selectedCourse?.dataset?.courseFee;
+                courseFeeInput.value = fee ? fee : '';
+            };
+
+            courseSelect.addEventListener('change', syncCourseFee);
+            syncCourseFee();
+        }
+
+        const copyBtn = document.getElementById('copyRegLinkBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                const url = this.dataset.regUrl;
+                navigator.clipboard.writeText(url).then(function () {
+                    copyBtn.innerHTML = '<i class="bi bi-check-lg"></i> Link Copied!';
+                    copyBtn.classList.remove('btn-outline-info');
+                    copyBtn.classList.add('btn-success');
+                    setTimeout(function () {
+                        copyBtn.innerHTML = '<i class="bi bi-link-45deg"></i> Copy Registration Link';
+                        copyBtn.classList.remove('btn-success');
+                        copyBtn.classList.add('btn-outline-info');
+                    }, 2000);
+                });
+            });
+        }
+    </script>
+}

@@ -1,0 +1,191 @@
+@model CandidateAttendanceApp.ViewModels.PaginatedList<Microsoft.AspNetCore.Identity.IdentityUser>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "User List";
+}
+
+<section class="page-title-row reveal">
+    <h2 class="mb-2">User List</h2>
+    <p class="text-muted mb-0">Browse registered users and open individual attendance reports.</p>
+</section>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<section class="panel-card reveal">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Registered Users</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="NewRegistration" class="btn btn-outline-success">
+                <i class="bi bi-person-plus"></i> New Registration
+            </a>
+            <a asp-action="NewAdmission" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> New Admission
+            </a>
+        </div>
+    </div>
+    <form asp-action="UserSummary" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-8 col-lg-6">
+            <label for="searchTerm" class="form-label">Search Users</label>
+            <input type="text"
+                   class="form-control"
+                   id="searchTerm"
+                   name="searchTerm"
+                   value="@ViewBag.SearchTerm"
+                   placeholder="Search by admission number or name" />
+        </div>
+        <div class="col-12 col-md-auto">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </div>
+        <div class="col-12 col-md-auto">
+            <a asp-action="UserSummary" class="btn btn-outline-secondary w-100">
+                Clear
+            </a>
+        </div>
+    </form>
+    <div class="table-shell">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Admission No.</th>
+                    <th>Email</th>
+                    <th>Section</th>
+                    <th>Email Confirmed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int i = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                    var userProfiles = ViewBag.UserProfiles as Dictionary<string, CandidateAttendanceApp.Models.UserProfile>;
+                }
+                @foreach (var user in Model.Items)
+                {
+                    var profile = userProfiles?.ContainsKey(user.Id) == true ? userProfiles[user.Id] : null;
+                    <tr>
+                        <td>@i</td>
+                        <td>@(profile?.Name ?? "-")</td>
+                        <td>@(string.IsNullOrWhiteSpace(profile?.AdmissionNumber) ? "-" : profile.AdmissionNumber)</td>
+                        <td>@user.Email</td>
+                        <td>@(profile?.Section?.Name ?? "-")</td>
+                        <td>
+                            @if (user.EmailConfirmed)
+                            {
+                                <span class="badge text-bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-danger">No</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex flex-nowrap gap-2">
+                                <a asp-controller="Admin"
+                                   asp-action="EditUser"
+                                   asp-route-userId="@user.Id"
+                                   class="btn btn-sm btn-outline-primary text-nowrap">
+                                    View Details
+                                </a>
+                                <a asp-controller="Admin"
+                                   asp-action="UserReport"
+                                   asp-route-userId="@user.Id"
+                                   class="btn btn-sm btn-primary text-nowrap">
+                                    View Attendance
+                                </a>
+                                <form asp-controller="Admin"
+                                      asp-action="DeleteUser"
+                                      asp-route-userId="@user.Id"
+                                      method="post"
+                                      id="delete-form-@user.Id"
+                                      class="d-inline">
+                                    <button type="button" class="btn btn-sm btn-outline-danger text-nowrap"
+                                            onclick="showDeleteModal('@user.Id', '@(profile?.Name ?? user.Email)')">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                    i++;
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            No users found matching the current search.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @{
+        ViewData["CurrentPage"] = Model.CurrentPage;
+        ViewData["TotalPages"] = Model.TotalPages;
+        ViewData["TotalRecords"] = Model.TotalRecords;
+        ViewData["PaginationAction"] = "UserSummary";
+        ViewData["PaginationController"] = "Admin";
+        ViewData["PaginationRouteValues"] = new Dictionary<string, string?>
+        {
+            { "searchTerm", ViewBag.SearchTerm as string }
+        };
+    }
+    <partial name="_Pagination" />
+</section>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteUserModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">Are you sure you want to delete this user?</p>
+                <p class="fw-bold text-danger mb-0" id="deleteUserName"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let deleteUserId = null;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+
+    function showDeleteModal(userId, userName) {
+        deleteUserId = userId;
+        document.getElementById('deleteUserName').textContent = userName;
+        deleteModal.show();
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+        if (deleteUserId) {
+            document.getElementById('delete-form-' + deleteUserId).submit();
+        }
+    });
+</script>
+}
